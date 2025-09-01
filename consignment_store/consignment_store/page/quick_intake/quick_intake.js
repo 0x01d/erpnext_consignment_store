@@ -1,5 +1,5 @@
 // consignment_store/consignment_store/page/quick_intake/quick_intake.js
-frappe.pages['quick-intake'].on_page_load = function(wrapper) {
+frappe.pages['quick-intake'].on_page_show = function(wrapper) {
     var page = frappe.ui.make_app_page({
         parent: wrapper,
         title: 'Quick Consignment Intake',
@@ -19,7 +19,7 @@ class QuickIntake {
     }
 
     make_page() {
-        this.page.$wrapper.html(`
+        this.page.wrapper.html(`
             <div class="quick-intake-container">
                 <div class="seller-section card">
                     <div class="card-header">
@@ -107,49 +107,49 @@ class QuickIntake {
         const me = this;
 
         // Seller search
-        this.page.$wrapper.on('input', '.seller-search', frappe.utils.debounce((e) => {
+        this.page.wrapper.on('input', '.seller-search', frappe.utils.debounce((e) => {
             this.search_seller(e.target.value);
         }, 300));
 
         // New seller
-        this.page.$wrapper.on('click', '.new-seller', () => {
+        this.page.wrapper.on('click', '.new-seller', () => {
             this.create_new_seller();
         });
 
         // Change seller
-        this.page.$wrapper.on('click', '.change-seller', () => {
+        this.page.wrapper.on('click', '.change-seller', () => {
             this.change_seller();
         });
 
         // Quick add buttons
-        this.page.$wrapper.on('click', '.quick-add', (e) => {
+        this.page.wrapper.on('click', '.quick-add', (e) => {
             const category = $(e.currentTarget).data('category');
             this.add_item(category);
         });
 
         // Process intake
-        this.page.$wrapper.on('click', '.process-intake', () => {
+        this.page.wrapper.on('click', '.process-intake', () => {
             this.process_intake();
         });
 
         // Clear all
-        this.page.$wrapper.on('click', '.clear-all', () => {
+        this.page.wrapper.on('click', '.clear-all', () => {
             this.clear_all();
         });
 
         // Remove item
-        this.page.$wrapper.on('click', '.remove-item', (e) => {
+        this.page.wrapper.on('click', '.remove-item', (e) => {
             $(e.currentTarget).closest('tr').remove();
             this.update_totals();
         });
 
         // Update totals on value change
-        this.page.$wrapper.on('change', '.item-price', () => {
+        this.page.wrapper.on('change', '.item-price', () => {
             this.update_totals();
         });
 
         // Tab navigation
-        this.page.$wrapper.on('keydown', 'input', (e) => {
+        this.page.wrapper.on('keydown', 'input', (e) => {
             if (e.key === 'Tab' && !e.shiftKey) {
                 const $input = $(e.currentTarget);
                 const $tr = $input.closest('tr');
@@ -165,7 +165,7 @@ class QuickIntake {
 
     search_seller(query) {
         if (!query) {
-            this.page.$wrapper.find('.seller-results').empty();
+            this.page.wrapper.find('.seller-results').empty();
             return;
         }
 
@@ -179,7 +179,7 @@ class QuickIntake {
     }
 
     show_seller_results(sellers) {
-        const $results = this.page.$wrapper.find('.seller-results');
+        const $results = this.page.wrapper.find('.seller-results');
 
         if (!sellers.length) {
             $results.html('<div class="no-results">No sellers found</div>');
@@ -205,10 +205,10 @@ class QuickIntake {
     select_seller(name) {
         frappe.db.get_doc('Consignor', name).then(doc => {
             this.current_seller = doc;
-            this.page.$wrapper.find('.seller-search').hide();
-            this.page.$wrapper.find('.seller-results').empty();
-            this.page.$wrapper.find('.selected-seller').show();
-            this.page.$wrapper.find('.seller-display-name').text(
+            this.page.wrapper.find('.seller-search').hide();
+            this.page.wrapper.find('.seller-results').empty();
+            this.page.wrapper.find('.selected-seller').show();
+            this.page.wrapper.find('.seller-display-name').text(
                 `${doc.consignor_name} (${doc.consignor_code})`
             );
         });
@@ -216,8 +216,8 @@ class QuickIntake {
 
     change_seller() {
         this.current_seller = null;
-        this.page.$wrapper.find('.seller-search').val('').show();
-        this.page.$wrapper.find('.selected-seller').hide();
+        this.page.wrapper.find('.seller-search').val('').show();
+        this.page.wrapper.find('.selected-seller').hide();
     }
 
     create_new_seller() {
@@ -339,8 +339,8 @@ class QuickIntake {
             </tr>
         `;
 
-        this.page.$wrapper.find('.items-tbody').append(row);
-        this.page.$wrapper.find(`tr[data-id="${id}"] .item-desc`).focus();
+        this.page.wrapper.find('.items-tbody').append(row);
+        this.page.wrapper.find(`tr[data-id="${id}"] .item-desc`).focus();
         this.update_totals();
     }
 
@@ -348,20 +348,20 @@ class QuickIntake {
         let total = 0;
         let count = 0;
 
-        this.page.$wrapper.find('.items-tbody tr').each((i, row) => {
+        this.page.wrapper.find('.items-tbody tr').each((i, row) => {
             const price = parseFloat($(row).find('.item-price').val()) || 0;
             total += price;
             count++;
         });
 
-        this.page.$wrapper.find('.total-value').text(`$${total.toFixed(2)}`);
-        this.page.$wrapper.find('.total-items').text(`${count} items`);
+        this.page.wrapper.find('.total-value').text(`$${total.toFixed(2)}`);
+        this.page.wrapper.find('.total-items').text(`${count} items`);
     }
 
     get_items_data() {
         const items = [];
 
-        this.page.$wrapper.find('.items-tbody tr').each((i, row) => {
+        this.page.wrapper.find('.items-tbody tr').each((i, row) => {
             const $row = $(row);
             const item = {
                 description: $row.find('.item-desc').val(),
@@ -429,7 +429,7 @@ class QuickIntake {
 
     clear_all() {
         this.change_seller();
-        this.page.$wrapper.find('.items-tbody').empty();
+        this.page.wrapper.find('.items-tbody').empty();
         this.update_totals();
     }
 }

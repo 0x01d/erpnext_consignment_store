@@ -11,6 +11,7 @@ def get_data():
             "icon": "octicon octicon-package",
             "type": "module",
             "description": "Manage consignment store operations",
-            "onboard_present": 1
+            "onboard_present": 1,
+            "link": "Modules/Consignment Store"  # Add this line
         }
     ]

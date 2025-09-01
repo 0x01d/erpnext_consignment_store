@@ -157,7 +157,7 @@ override_whitelisted_methods = {
 # ------------
 
 # before_install = "consignment_store.install.before_install"
-# after_install = "consignment_store.install.after_install"
+after_install = "consignment_store.install.after_install"
 
 # Uninstallation
 # ------------
