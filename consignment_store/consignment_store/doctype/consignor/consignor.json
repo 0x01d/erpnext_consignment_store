@@ -1,0 +1,210 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "basic_section",
+        "consignor_code",
+        "consignor_name",
+        "email",
+        "phone",
+        "id_number",
+        "supplier_link",
+        "status",
+        "column_break_1",
+        "registration_date",
+        "address_section",
+        "address",
+        "city",
+        "postal_code",
+        "commission_section",
+        "default_commission_rate",
+        "minimum_payout",
+        "payment_section",
+        "payment_method",
+        "bank_name",
+        "bank_account",
+        "statistics_section",
+        "total_items_consigned",
+        "total_items_sold",
+        "lifetime_earnings"
+    ],
+    "fields": [
+        {
+            "fieldname": "basic_section",
+            "fieldtype": "Section Break",
+            "label": "Basic Information"
+        },
+        {
+            "fieldname": "consignor_code",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Consignor Code",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "consignor_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Full Name",
+            "reqd": 1
+        },
+        {
+            "fieldname": "email",
+            "fieldtype": "Data",
+            "label": "Email",
+            "options": "Email",
+            "reqd": 1
+        },
+        {
+            "fieldname": "phone",
+            "fieldtype": "Data",
+            "label": "Phone",
+            "reqd": 1
+        },
+        {
+            "fieldname": "id_number",
+            "fieldtype": "Data",
+            "label": "ID/Passport Number"
+        },
+        {
+            "fieldname": "supplier_link",
+            "fieldtype": "Link",
+            "label": "Supplier",
+            "options": "Supplier",
+            "read_only": 1
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "label": "Status",
+            "options": "Active\nInactive\nBlocked",
+            "default": "Active"
+        },
+        {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "registration_date",
+            "fieldtype": "Date",
+            "label": "Registration Date",
+            "default": "Today"
+        },
+        {
+            "fieldname": "address_section",
+            "fieldtype": "Section Break",
+            "label": "Address"
+        },
+        {
+            "fieldname": "address",
+            "fieldtype": "Small Text",
+            "label": "Address"
+        },
+        {
+            "fieldname": "city",
+            "fieldtype": "Data",
+            "label": "City"
+        },
+        {
+            "fieldname": "postal_code",
+            "fieldtype": "Data",
+            "label": "Postal Code"
+        },
+        {
+            "fieldname": "commission_section",
+            "fieldtype": "Section Break",
+            "label": "Commission Settings"
+        },
+        {
+            "fieldname": "default_commission_rate",
+            "fieldtype": "Percent",
+            "label": "Default Commission %",
+            "default": 50
+        },
+        {
+            "fieldname": "minimum_payout",
+            "fieldtype": "Currency",
+            "label": "Minimum Payout",
+            "default": 50
+        },
+        {
+            "fieldname": "payment_section",
+            "fieldtype": "Section Break",
+            "label": "Payment Information"
+        },
+        {
+            "fieldname": "payment_method",
+            "fieldtype": "Select",
+            "label": "Payment Method",
+            "options": "Bank Transfer\nPayPal\nCash\nStore Credit",
+            "default": "Bank Transfer"
+        },
+        {
+            "fieldname": "bank_name",
+            "fieldtype": "Data",
+            "label": "Bank Name",
+            "depends_on": "eval:doc.payment_method=='Bank Transfer'"
+        },
+        {
+            "fieldname": "bank_account",
+            "fieldtype": "Data",
+            "label": "Account Number",
+            "depends_on": "eval:doc.payment_method=='Bank Transfer'"
+        },
+        {
+            "fieldname": "statistics_section",
+            "fieldtype": "Section Break",
+            "label": "Statistics"
+        },
+        {
+            "fieldname": "total_items_consigned",
+            "fieldtype": "Int",
+            "label": "Total Items Consigned",
+            "read_only": 1
+        },
+        {
+            "fieldname": "total_items_sold",
+            "fieldtype": "Int",
+            "label": "Total Items Sold",
+            "read_only": 1
+        },
+        {
+            "fieldname": "lifetime_earnings",
+            "fieldtype": "Currency",
+            "label": "Lifetime Earnings",
+            "read_only": 1
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Consignment Store",
+    "name": "Consignor",
+    "naming_rule": "By fieldname",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "title_field": "consignor_name",
+    "track_changes": 1
+}

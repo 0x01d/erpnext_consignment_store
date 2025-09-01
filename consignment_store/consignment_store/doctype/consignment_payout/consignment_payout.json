@@ -1,0 +1,111 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "autoname": "naming_series:",
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "naming_series",
+        "consignor",
+        "payout_date",
+        "total_amount",
+        "payment_method",
+        "payment_reference",
+        "commission_entries_section",
+        "commission_entries",
+        "status"
+    ],
+    "fields": [
+        {
+            "fieldname": "naming_series",
+            "fieldtype": "Select",
+            "label": "Series",
+            "options": "CP-.YYYY.-.#####",
+            "reqd": 1
+        },
+        {
+            "fieldname": "consignor",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Consignor",
+            "options": "Consignor",
+            "reqd": 1
+        },
+        {
+            "fieldname": "payout_date",
+            "fieldtype": "Date",
+            "in_list_view": 1,
+            "label": "Payout Date",
+            "default": "Today",
+            "reqd": 1
+        },
+        {
+            "fieldname": "total_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Total Amount",
+            "reqd": 1
+        },
+        {
+            "fieldname": "payment_method",
+            "fieldtype": "Select",
+            "label": "Payment Method",
+            "options": "Bank Transfer\nPayPal\nCash\nStore Credit"
+        },
+        {
+            "fieldname": "payment_reference",
+            "fieldtype": "Data",
+            "label": "Payment Reference"
+        },
+        {
+            "fieldname": "commission_entries_section",
+            "fieldtype": "Section Break",
+            "label": "Commission Entries"
+        },
+        {
+            "fieldname": "commission_entries",
+            "fieldtype": "Table",
+            "label": "Commission Entries",
+            "options": "Consignment Payout Item"
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Status",
+            "options": "Draft\nPaid\nCancelled",
+            "default": "Draft"
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Consignment Store",
+    "name": "Consignment Payout",
+    "naming_rule": "By \"Naming Series\" field",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1,
+            "submit": 1,
+            "cancel": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}

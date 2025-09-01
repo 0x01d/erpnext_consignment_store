@@ -1,0 +1,118 @@
+<!-- consignment_store/www/seller-portal/index.html -->
+{% extends "templates/web.html" %}
+{% block title %}Seller Portal{% endblock %}
+
+{% block page_content %}
+<div class="seller-portal-container">
+    {% if not data %}
+    <div class="login-prompt text-center">
+        <h3>Please log in to view your consignment dashboard</h3>
+        <a href="/login" class="btn btn-primary">Login</a>
+    </div>
+    {% else %}
+    <div class="dashboard">
+        <h2>Welcome, {{ data.consignor.consignor_name }}</h2>
+        <p class="text-muted">Consignor Code: {{ data.consignor.consignor_code }}</p>
+
+        <div class="row stats-row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value">{{ data.stats.active_items }}</div>
+                    <div class="stat-label">Active Items</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value">{{ data.stats.sold_items }}</div>
+                    <div class="stat-label">Items Sold</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value">${{ "%.2f"|format(data.stats.total_earnings) }}</div>
+                    <div class="stat-label">Total Earnings</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card highlight">
+                    <div class="stat-value">${{ "%.2f"|format(data.stats.pending_payout) }}</div>
+                    <div class="stat-label">Pending Payout</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h4>Active Items</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Price</th>
+                                <th>Days</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data.active_items %}
+                            <tr>
+                                <td>{{ item.item_name[:30] }}</td>
+                                <td>${{ "%.2f"|format(item.price) }}</td>
+                                <td>{{ item.days_active }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>Recent Sales</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Commission</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in data.recent_sales %}
+                            <tr>
+                                <td>{{ sale.date }}</td>
+                                <td>{{ sale.item_name[:30] }}</td>
+                                <td>${{ "%.2f"|format(sale.commission) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.stat-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.stat-card.highlight {
+    background: #28a745;
+    color: white;
+}
+.stat-value {
+    font-size: 2em;
+    font-weight: bold;
+}
+.stat-label {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+</style>
+{% endblock %}

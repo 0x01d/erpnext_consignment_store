@@ -1,0 +1,120 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "autoname": "naming_series:",
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "naming_series",
+        "consignor",
+        "sales_invoice",
+        "item_code",
+        "posting_date",
+        "sale_amount",
+        "commission_rate",
+        "commission_amount",
+        "status",
+        "payout_reference"
+    ],
+    "fields": [
+        {
+            "fieldname": "naming_series",
+            "fieldtype": "Select",
+            "label": "Series",
+            "options": "CE-.YYYY.-.#####",
+            "reqd": 1
+        },
+        {
+            "fieldname": "consignor",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Consignor",
+            "options": "Consignor",
+            "reqd": 1
+        },
+        {
+            "fieldname": "sales_invoice",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Sales Invoice",
+            "options": "Sales Invoice",
+            "reqd": 1
+        },
+        {
+            "fieldname": "item_code",
+            "fieldtype": "Link",
+            "label": "Item",
+            "options": "Item",
+            "reqd": 1
+        },
+        {
+            "fieldname": "posting_date",
+            "fieldtype": "Date",
+            "in_list_view": 1,
+            "label": "Date",
+            "reqd": 1
+        },
+        {
+            "fieldname": "sale_amount",
+            "fieldtype": "Currency",
+            "label": "Sale Amount",
+            "reqd": 1
+        },
+        {
+            "fieldname": "commission_rate",
+            "fieldtype": "Percent",
+            "label": "Commission Rate",
+            "reqd": 1
+        },
+        {
+            "fieldname": "commission_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Commission Amount",
+            "reqd": 1
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Status",
+            "options": "Pending\nProcessed\nPaid",
+            "default": "Pending"
+        },
+        {
+            "fieldname": "payout_reference",
+            "fieldtype": "Link",
+            "label": "Payout Reference",
+            "options": "Consignment Payout",
+            "read_only": 1
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Consignment Store",
+    "name": "Commission Entry",
+    "naming_rule": "By \"Naming Series\" field",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}

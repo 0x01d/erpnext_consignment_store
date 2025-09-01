@@ -1,0 +1,116 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "autoname": "naming_series:",
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "naming_series",
+        "consignor",
+        "intake_date",
+        "processed_by",
+        "items_section",
+        "items",
+        "totals_section",
+        "total_items",
+        "total_value",
+        "expected_commission"
+    ],
+    "fields": [
+        {
+            "fieldname": "naming_series",
+            "fieldtype": "Select",
+            "label": "Series",
+            "options": "CB-.YYYY.-.#####",
+            "reqd": 1
+        },
+        {
+            "fieldname": "consignor",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Consignor",
+            "options": "Consignor",
+            "reqd": 1
+        },
+        {
+            "fieldname": "intake_date",
+            "fieldtype": "Date",
+            "in_list_view": 1,
+            "label": "Intake Date",
+            "default": "Today",
+            "reqd": 1
+        },
+        {
+            "fieldname": "processed_by",
+            "fieldtype": "Link",
+            "label": "Processed By",
+            "options": "User",
+            "default": "__user"
+        },
+        {
+            "fieldname": "items_section",
+            "fieldtype": "Section Break",
+            "label": "Items"
+        },
+        {
+            "fieldname": "items",
+            "fieldtype": "Table",
+            "label": "Items",
+            "options": "Consignment Batch Item"
+        },
+        {
+            "fieldname": "totals_section",
+            "fieldtype": "Section Break",
+            "label": "Totals"
+        },
+        {
+            "fieldname": "total_items",
+            "fieldtype": "Int",
+            "label": "Total Items",
+            "read_only": 1
+        },
+        {
+            "fieldname": "total_value",
+            "fieldtype": "Currency",
+            "label": "Total Value",
+            "read_only": 1
+        },
+        {
+            "fieldname": "expected_commission",
+            "fieldtype": "Currency",
+            "label": "Expected Commission",
+            "read_only": 1
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Consignment Store",
+    "name": "Consignment Batch",
+    "naming_rule": "By \"Naming Series\" field",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1,
+            "submit": 1,
+            "cancel": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}

@@ -4,11 +4,85 @@ app_publisher = "rbn.dev"
 app_description = "Custom app for running our consignment store"
 app_email = "work@rbn.dev"
 app_license = "gpl-2.0"
+app_icon = "octicon octicon-package"
+app_color = "#4CAF50"
 
 # Apps
 # ------------------
 
-# required_apps = []
+# Required Apps
+required_apps = ["frappe", "erpnext"]
+
+# DocTypes to be created
+doctype_js = {
+    "Sales Invoice": "public/js/sales_invoice.js",
+    "POS Invoice": "public/js/pos_invoice.js"
+}
+
+# Document Events
+doc_events = {
+    "Sales Invoice": {
+        "validate": "consignment_store.utils.commission.validate_consignment_items",
+        "on_submit": [
+            "consignment_store.utils.commission.process_commission",
+            "consignment_store.utils.notifications.notify_items_sold"
+        ],
+        "on_cancel": "consignment_store.utils.commission.cancel_commission"
+    },
+    "POS Invoice": {
+        "validate": "consignment_store.utils.commission.validate_consignment_items",
+        "on_submit": "consignment_store.utils.commission.process_commission"
+    },
+    "Item": {
+        "after_insert": "consignment_store.utils.qr_generator.generate_qr_for_item",
+        "validate": "consignment_store.utils.commission.validate_consignment_item"
+    }
+}
+
+scheduler_events = {
+    "daily": [
+        "consignment_store.utils.notifications.check_expiring_items",
+        "consignment_store.utils.notifications.send_daily_summary"
+    ],
+    "monthly": [
+        "consignment_store.utils.commission.process_monthly_payouts"
+    ]
+}
+
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["name", "in", [
+                "Item-consignment_section",
+                "Item-is_consignment",
+                "Item-consignor",
+                "Item-consignment_code",
+                "Item-commission_rate",
+                "Item-consignment_expiry_date",
+                "Item-consignment_status",
+                "Item-qr_code_data",
+                "Sales Invoice Item-is_consignment",
+                "Sales Invoice Item-consignor",
+                "Sales Invoice Item-commission_amount",
+                "Supplier-is_consignor"
+            ]]
+        ]
+    }
+]
+
+# Override whitelisted methods
+override_whitelisted_methods = {
+    "erpnext.selling.page.point_of_sale.point_of_sale.search_by_term":
+        "consignment_store.api.intake.search_with_consignment_info"
+}
+
+# Jinja
+# jinja = {
+#     "methods": [
+#         "consignment_store.utils.get_consignment_badge"
+#     ]
+# }
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
