@@ -1,0 +1,212 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "autoname": "naming_series:",
+    "creation": "2024-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "naming_series",
+        "consignor",
+        "contract_date",
+        "contract_status",
+        "column_break_1",
+        "contract_duration_days",
+        "grace_period_days",
+        "contract_end_date",
+        "ownership_transfer_date",
+        "contract_details_section",
+        "total_items",
+        "total_retail_value",
+        "expected_commission",
+        "actual_sales",
+        "actual_commission",
+        "items_section",
+        "items",
+        "terms_section",
+        "contract_terms",
+        "signature_section",
+        "consignor_signature",
+        "column_break_sig",
+        "store_signature"
+    ],
+    "fields": [
+        {
+            "fieldname": "naming_series",
+            "fieldtype": "Select",
+            "label": "Series",
+            "options": "CC-.YYYY.-.#####",
+            "reqd": 1
+        },
+        {
+            "fieldname": "consignor",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Consignor",
+            "options": "Consignor",
+            "reqd": 1
+        },
+        {
+            "fieldname": "contract_date",
+            "fieldtype": "Date",
+            "in_list_view": 1,
+            "label": "Contract Date",
+            "default": "Today",
+            "reqd": 1
+        },
+        {
+            "fieldname": "contract_status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Status",
+            "options": "Active\nExpired\nAwaiting Pickup\nOwnership Transferred\nCompleted\nCancelled",
+            "default": "Active",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "contract_duration_days",
+            "fieldtype": "Int",
+            "label": "Duration (Days)",
+            "default": 60,
+            "reqd": 1
+        },
+        {
+            "fieldname": "grace_period_days",
+            "fieldtype": "Int",
+            "label": "Grace Period (Days)",
+            "default": 14,
+            "reqd": 1
+        },
+        {
+            "fieldname": "contract_end_date",
+            "fieldtype": "Date",
+            "label": "Contract End Date",
+            "read_only": 1
+        },
+        {
+            "fieldname": "ownership_transfer_date",
+            "fieldtype": "Date",
+            "label": "Ownership Transfer Date",
+            "read_only": 1
+        },
+        {
+            "fieldname": "contract_details_section",
+            "fieldtype": "Section Break",
+            "label": "Contract Details"
+        },
+        {
+            "fieldname": "total_items",
+            "fieldtype": "Int",
+            "label": "Total Items",
+            "read_only": 1
+        },
+        {
+            "fieldname": "total_retail_value",
+            "fieldtype": "Currency",
+            "label": "Total Retail Value",
+            "read_only": 1
+        },
+        {
+            "fieldname": "expected_commission",
+            "fieldtype": "Currency",
+            "label": "Expected Commission",
+            "read_only": 1
+        },
+        {
+            "fieldname": "actual_sales",
+            "fieldtype": "Currency",
+            "label": "Actual Sales",
+            "read_only": 1
+        },
+        {
+            "fieldname": "actual_commission",
+            "fieldtype": "Currency",
+            "label": "Actual Commission",
+            "read_only": 1
+        },
+        {
+            "fieldname": "items_section",
+            "fieldtype": "Section Break",
+            "label": "Items"
+        },
+        {
+            "fieldname": "items",
+            "fieldtype": "Table",
+            "label": "Items",
+            "options": "Consignment Contract Item"
+        },
+        {
+            "fieldname": "terms_section",
+            "fieldtype": "Section Break",
+            "label": "Terms & Conditions"
+        },
+        {
+            "fieldname": "contract_terms",
+            "fieldtype": "Text Editor",
+            "label": "Contract Terms",
+            "default": "<h4>CONSIGNMENT AGREEMENT TERMS</h4>\n<ol>\n<li><strong>Consignment Period:</strong> Items will be displayed for sale for the agreed duration from the contract date.</li>\n<li><strong>Pricing:</strong> Items will be priced as agreed. Store may offer discounts with consignor notification.</li>\n<li><strong>Commission:</strong> Store retains the agreed commission percentage on actual sale price.</li>\n<li><strong>Payment:</strong> Payments processed monthly, subject to minimum payout threshold.</li>\n<li><strong>Collection:</strong> Unsold items must be collected within the grace period after contract end.</li>\n<li><strong>Ownership Transfer:</strong> Items not collected after grace period become property of the store.</li>\n<li><strong>Liability:</strong> Store is not liable for theft, damage from normal wear, or force majeure events.</li>\n<li><strong>Termination:</strong> Either party may terminate with 7 days written notice.</li>\n</ol>"
+        },
+        {
+            "fieldname": "signature_section",
+            "fieldtype": "Section Break",
+            "label": "Signatures"
+        },
+        {
+            "fieldname": "consignor_signature",
+            "fieldtype": "Attach Image",
+            "label": "Consignor Signature"
+        },
+        {
+            "fieldname": "column_break_sig",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "store_signature",
+            "fieldtype": "Attach Image",
+            "label": "Store Representative Signature"
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2024-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Consignment Store",
+    "name": "Consignment Contract",
+    "naming_rule": "By \"Naming Series\" field",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1,
+            "submit": 1,
+            "cancel": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Sales User",
+            "share": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}

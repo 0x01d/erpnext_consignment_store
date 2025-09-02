@@ -1,3 +1,4 @@
+# consignment_store/hooks.py
 app_name = "consignment_store"
 app_title = "Consignment Store"
 app_publisher = "rbn.dev"
@@ -6,9 +7,6 @@ app_email = "work@rbn.dev"
 app_license = "gpl-2.0"
 app_icon = "octicon octicon-package"
 app_color = "#4CAF50"
-
-# Apps
-# ------------------
 
 # Required Apps
 required_apps = ["frappe", "erpnext"]
@@ -19,19 +17,20 @@ doctype_js = {
     "POS Invoice": "public/js/pos_invoice.js"
 }
 
-# Document Events
+# Document Events - Critical for proper accounting
 doc_events = {
     "Sales Invoice": {
         "validate": "consignment_store.utils.commission.validate_consignment_items",
         "on_submit": [
-            "consignment_store.utils.commission.process_commission",
-            "consignment_store.utils.notifications.notify_items_sold"
+            "consignment_store.utils.commission.process_commission",  # This creates GL entries
+            # "consignment_store.utils.notifications.notify_items_sold"  # Disabled for dev
         ],
         "on_cancel": "consignment_store.utils.commission.cancel_commission"
     },
     "POS Invoice": {
         "validate": "consignment_store.utils.commission.validate_consignment_items",
-        "on_submit": "consignment_store.utils.commission.process_commission"
+        "on_submit": "consignment_store.utils.commission.process_commission",
+        "on_cancel": "consignment_store.utils.commission.cancel_commission"
     },
     "Item": {
         "after_insert": "consignment_store.utils.qr_generator.generate_qr_for_item",
@@ -39,16 +38,19 @@ doc_events = {
     }
 }
 
+# Scheduled Tasks
 scheduler_events = {
     "daily": [
-        "consignment_store.utils.notifications.check_expiring_items",
-        "consignment_store.utils.notifications.send_daily_summary"
+        "consignment_store.utils.commission.check_contracts_daily",  # Check contract expiry
+        # "consignment_store.utils.notifications.check_expiring_items",
+        # "consignment_store.utils.notifications.send_daily_summary"
     ],
     "monthly": [
         "consignment_store.utils.commission.process_monthly_payouts"
     ]
 }
 
+# Fixtures - Export custom fields
 fixtures = [
     {
         "dt": "Custom Field",
@@ -59,24 +61,45 @@ fixtures = [
                 "Item-consignor",
                 "Item-consignment_code",
                 "Item-commission_rate",
+                "Item-consignment_contract",
                 "Item-consignment_expiry_date",
+                "Item-ownership_transfer_date",
                 "Item-consignment_status",
                 "Item-qr_code_data",
                 "Sales Invoice Item-is_consignment",
                 "Sales Invoice Item-consignor",
+                "Sales Invoice Item-commission_rate",
                 "Sales Invoice Item-commission_amount",
+                "Sales Invoice Item-consignor_amount",
+                "POS Invoice Item-is_consignment",
+                "POS Invoice Item-consignor",
+                "POS Invoice Item-commission_rate",
+                "POS Invoice Item-commission_amount",
+                "POS Invoice Item-consignor_amount",
                 "Supplier-is_consignor"
             ]]
         ]
     }
 ]
 
-# Override whitelisted methods
+# Override whitelisted methods for POS integration
 override_whitelisted_methods = {
     "erpnext.selling.page.point_of_sale.point_of_sale.search_by_term":
         "consignment_store.api.intake.search_with_consignment_info"
 }
 
+# Installation
+after_install = "consignment_store.install.after_install"
+
+# Accounting Settings Override
+# This ensures Sales Invoice uses our custom GL processing
+accounting_dimension_doctypes = ["Sales Invoice", "POS Invoice"]
+
+# Custom Print Format
+# print_formats = {
+#     "Consignment Contract": "consignment_store.print_formats.consignment_contract"
+# }
+###############################################################################
 # Jinja
 # jinja = {
 #     "methods": [
