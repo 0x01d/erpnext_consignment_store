@@ -73,7 +73,8 @@ def process_intake(consignor, items):
 
     # Send notification
     from consignment_store.utils.notifications import send_intake_confirmation
-    send_intake_confirmation(consignor, created_items)
+	# Disabled e-mails for dev
+    #send_intake_confirmation(consignor, created_items)
 
     return {
         'success': True,

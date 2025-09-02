@@ -23,7 +23,7 @@ class Consignor(Document):
     def create_supplier(self):
         supplier = frappe.new_doc('Supplier')
         supplier.supplier_name = self.consignor_name
-        supplier.supplier_group = 'Individual'
+        supplier.supplier_group = 'Individual Consignor'  # Fixed: Changed from 'Individual' to match install.py
         supplier.flags.ignore_permissions = True
         supplier.insert()
         self.supplier_link = supplier.name
