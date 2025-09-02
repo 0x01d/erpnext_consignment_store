@@ -234,6 +234,7 @@ def create_default_settings():
         doc.item_group_name = 'Consignment'
         doc.parent_item_group = 'All Item Groups'
         doc.insert(ignore_permissions=True)
+        frappe.db.commit()
         print("✓ Created Consignment item group")
 
     # Create clearance item group
@@ -242,6 +243,7 @@ def create_default_settings():
         doc.item_group_name = 'Clearance'
         doc.parent_item_group = 'All Item Groups'
         doc.insert(ignore_permissions=True)
+        frappe.db.commit()
         print("✓ Created Clearance item group")
 
     # Create supplier group
@@ -249,6 +251,7 @@ def create_default_settings():
         doc = frappe.new_doc('Supplier Group')
         doc.supplier_group_name = 'Individual Consignor'
         doc.insert(ignore_permissions=True)
+        frappe.db.commit()
         print("✓ Created Individual Consignor supplier group")
 
     # Create warehouse for consignment (virtual, no stock value)
@@ -260,6 +263,7 @@ def create_default_settings():
             warehouse.parent_warehouse = f'All Warehouses - {frappe.db.get_value("Company", company, "abbr")}'
             warehouse.company = company
             warehouse.insert(ignore_permissions=True)
+            frappe.db.commit()
             print("✓ Created Consignment Area warehouse")
 
 def create_workspace():

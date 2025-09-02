@@ -9,14 +9,21 @@
     "field_order": [
         "naming_series",
         "consignor",
+        "consignment_contract",
         "sales_invoice",
         "item_code",
         "posting_date",
+        "column_break_1",
         "sale_amount",
         "commission_rate",
         "commission_amount",
+        "consignor_liability",
         "status",
-        "payout_reference"
+        "payout_reference",
+        "accounting_section",
+        "gl_entries_created",
+        "revenue_recognized",
+        "liability_recorded"
     ],
     "fields": [
         {
@@ -33,6 +40,13 @@
             "label": "Consignor",
             "options": "Consignor",
             "reqd": 1
+        },
+        {
+            "fieldname": "consignment_contract",
+            "fieldtype": "Link",
+            "label": "Contract",
+            "options": "Consignment Contract",
+            "read_only": 1
         },
         {
             "fieldname": "sales_invoice",
@@ -57,6 +71,10 @@
             "reqd": 1
         },
         {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
             "fieldname": "sale_amount",
             "fieldtype": "Currency",
             "label": "Sale Amount",
@@ -76,11 +94,17 @@
             "reqd": 1
         },
         {
+            "fieldname": "consignor_liability",
+            "fieldtype": "Currency",
+            "label": "Amount Owed to Consignor",
+            "read_only": 1
+        },
+        {
             "fieldname": "status",
             "fieldtype": "Select",
             "in_list_view": 1,
             "label": "Status",
-            "options": "Pending\nProcessed\nPaid",
+            "options": "Pending\nProcessed\nPaid\nCancelled",
             "default": "Pending"
         },
         {
@@ -88,6 +112,29 @@
             "fieldtype": "Link",
             "label": "Payout Reference",
             "options": "Consignment Payout",
+            "read_only": 1
+        },
+        {
+            "fieldname": "accounting_section",
+            "fieldtype": "Section Break",
+            "label": "Accounting"
+        },
+        {
+            "fieldname": "gl_entries_created",
+            "fieldtype": "Check",
+            "label": "GL Entries Created",
+            "read_only": 1
+        },
+        {
+            "fieldname": "revenue_recognized",
+            "fieldtype": "Currency",
+            "label": "Revenue Recognized",
+            "read_only": 1
+        },
+        {
+            "fieldname": "liability_recorded",
+            "fieldtype": "Currency",
+            "label": "Liability Recorded",
             "read_only": 1
         }
     ],
@@ -111,6 +158,14 @@
             "role": "System Manager",
             "share": 1,
             "write": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Accounts User"
         }
     ],
     "sort_field": "modified",
