@@ -27,9 +27,17 @@
         "terms_section",
         "contract_terms",
         "signature_section",
-        "consignor_signature",
+        "signature_token",
+        "consignor_signed",
+        "consignor_signed_date",
+        "consignor_signer_name",
+        "consignor_signer_ip",
+        "consignor_signature_data",
         "column_break_sig",
-        "store_signature"
+        "store_signed",
+        "store_signed_date",
+        "store_signer_name",
+        "store_signature_data"
     ],
     "fields": [
         {
@@ -60,8 +68,8 @@
             "fieldtype": "Select",
             "in_list_view": 1,
             "label": "Status",
-            "options": "Active\nExpired\nAwaiting Pickup\nOwnership Transferred\nCompleted\nCancelled",
-            "default": "Active",
+            "options": "Draft\nPending Signature\nActive\nExpired\nAwaiting Pickup\nOwnership Transferred\nCompleted\nCancelled",
+            "default": "Draft",
             "read_only": 1
         },
         {
@@ -154,21 +162,74 @@
         {
             "fieldname": "signature_section",
             "fieldtype": "Section Break",
-            "label": "Signatures"
+            "label": "Digital Signatures"
         },
         {
-            "fieldname": "consignor_signature",
-            "fieldtype": "Attach Image",
-            "label": "Consignor Signature"
+            "fieldname": "signature_token",
+            "fieldtype": "Data",
+            "label": "Signature Token",
+            "read_only": 1,
+            "hidden": 1
+        },
+        {
+            "fieldname": "consignor_signed",
+            "fieldtype": "Check",
+            "label": "Consignor Signed",
+            "read_only": 1
+        },
+        {
+            "fieldname": "consignor_signed_date",
+            "fieldtype": "Datetime",
+            "label": "Consignor Signed Date",
+            "read_only": 1
+        },
+        {
+            "fieldname": "consignor_signer_name",
+            "fieldtype": "Data",
+            "label": "Consignor Signer Name",
+            "read_only": 1
+        },
+        {
+            "fieldname": "consignor_signer_ip",
+            "fieldtype": "Data",
+            "label": "Consignor IP Address",
+            "read_only": 1
+        },
+        {
+            "fieldname": "consignor_signature_data",
+            "fieldtype": "Long Text",
+            "label": "Consignor Signature Data",
+            "read_only": 1,
+            "hidden": 1
         },
         {
             "fieldname": "column_break_sig",
             "fieldtype": "Column Break"
         },
         {
-            "fieldname": "store_signature",
-            "fieldtype": "Attach Image",
-            "label": "Store Representative Signature"
+            "fieldname": "store_signed",
+            "fieldtype": "Check",
+            "label": "Store Signed",
+            "read_only": 1
+        },
+        {
+            "fieldname": "store_signed_date",
+            "fieldtype": "Datetime",
+            "label": "Store Signed Date",
+            "read_only": 1
+        },
+        {
+            "fieldname": "store_signer_name",
+            "fieldtype": "Data",
+            "label": "Store Signer Name",
+            "read_only": 1
+        },
+        {
+            "fieldname": "store_signature_data",
+            "fieldtype": "Long Text",
+            "label": "Store Signature Data",
+            "read_only": 1,
+            "hidden": 1
         }
     ],
     "index_web_pages_for_search": 0,
