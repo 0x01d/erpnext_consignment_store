@@ -1,5 +1,5 @@
 // consignment_store/consignment_store/page/quick_intake/quick_intake.js
-// Updated to work with contracts instead of batches
+// Enhanced with smart search and tab navigation
 
 frappe.pages['quick-intake'].on_page_show = function(wrapper) {
     var page = frappe.ui.make_app_page({
@@ -16,8 +16,10 @@ class QuickIntake {
         this.page = page;
         this.current_seller = null;
         this.items = [];
+        this.brands_cache = null;
         this.make_page();
         this.bind_events();
+        this.load_brands();
     }
 
     make_page() {
@@ -36,8 +38,8 @@ class QuickIntake {
                             <div class="col-md-8">
                                 <div class="seller-search-container">
                                     <input type="text" class="form-control seller-search"
-                                        placeholder="Search by name, phone, email, or code...">
-                                    <div class="seller-results"></div>
+                                        placeholder="Search by name, phone, email, or code... (Tab to select)">
+                                    <div class="seller-results dropdown-results"></div>
                                 </div>
                                 <div class="selected-seller" style="display:none;">
                                     <div class="alert alert-success">
@@ -149,7 +151,7 @@ class QuickIntake {
                         <h5>📊 How This Works:</h5>
                         <ol class="mb-0">
                             <li>Items are consigned for agreed duration (default 60 days)</li>
-                            <li><strong>NO warehouse value recorded</strong> - items remain consignor's property</li>
+                            <li><strong>NO warehouse value recorded</strong> - items remain consignor\'s property</li>
                             <li>When sold: Only commission (%) is recognized as income</li>
                             <li>After contract expires: Grace period for pickup</li>
                             <li>Uncollected items: Become store property at 30% markdown</li>
@@ -157,16 +159,108 @@ class QuickIntake {
                     </div>
                 </div>
             </div>
+
+            <style>
+                .dropdown-results {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    background: white;
+                    border: 1px solid #ddd;
+                    border-top: 0;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    z-index: 1000;
+                    display: none;
+                }
+                .dropdown-results.show {
+                    display: block;
+                }
+                .dropdown-result {
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #f0f0f0;
+                }
+                .dropdown-result:hover,
+                .dropdown-result.highlighted {
+                    background: #f8f9fa;
+                }
+                .dropdown-result.create-new {
+                    background: #e8f5e9;
+                    color: #2e7d32;
+                    font-weight: 500;
+                }
+                .dropdown-result.create-new:hover {
+                    background: #c8e6c9;
+                }
+                .brand-search-wrapper {
+                    position: relative;
+                }
+                .brand-results {
+                    margin-top: -1px;
+                }
+                .no-results {
+                    padding: 8px 12px;
+                    color: #666;
+                    font-style: italic;
+                }
+            </style>
         `);
     }
 
     bind_events() {
         const me = this;
 
-        // Seller search
+        // Seller search with enhanced keyboard navigation
         this.page.wrapper.on('input', '.seller-search', frappe.utils.debounce((e) => {
             this.search_seller(e.target.value);
         }, 300));
+
+        // Tab key handling for seller search
+        this.page.wrapper.on('keydown', '.seller-search', (e) => {
+            if (e.key === 'Tab' && !e.shiftKey) {
+                const $results = this.page.wrapper.find('.seller-results');
+                const $firstResult = $results.find('.seller-result:first');
+
+                if ($firstResult.length) {
+                    e.preventDefault();
+                    const name = $firstResult.data('name');
+                    this.select_seller(name);
+
+                    // Focus on first item description field or contract duration
+                    setTimeout(() => {
+                        const $firstItem = this.page.wrapper.find('.items-tbody .item-desc:first');
+                        if ($firstItem.length) {
+                            $firstItem.focus();
+                        } else {
+                            this.page.wrapper.find('.contract-duration').focus();
+                        }
+                    }, 100);
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.navigateResults('.seller-results', 'down');
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.navigateResults('.seller-results', 'up');
+            } else if (e.key === 'Enter') {
+                const $highlighted = this.page.wrapper.find('.seller-results .highlighted');
+                if ($highlighted.length) {
+                    e.preventDefault();
+                    const name = $highlighted.data('name');
+                    this.select_seller(name);
+                }
+            }
+        });
+
+        // Click outside to close dropdowns
+        $(document).on('click', (e) => {
+            if (!$(e.target).closest('.seller-search-container, .brand-search-wrapper').length) {
+                this.page.wrapper.find('.dropdown-results').removeClass('show');
+            }
+        });
 
         // New seller
         this.page.wrapper.on('click', '.new-seller', () => {
@@ -214,12 +308,12 @@ class QuickIntake {
             this.update_totals();
         });
 
-        // Tab navigation
-        this.page.wrapper.on('keydown', 'input', (e) => {
+        // Tab navigation in item rows
+        this.page.wrapper.on('keydown', 'input, select', (e) => {
             if (e.key === 'Tab' && !e.shiftKey) {
                 const $input = $(e.currentTarget);
                 const $tr = $input.closest('tr');
-                const $lastInput = $tr.find('input:last, select:last');
+                const $lastInput = $tr.find('input:last, select:last').filter(':visible');
 
                 if ($input.is($lastInput)) {
                     e.preventDefault();
@@ -229,6 +323,40 @@ class QuickIntake {
         });
     }
 
+    load_brands() {
+        // Load all unique brands from Items
+        frappe.call({
+            method: 'frappe.client.get_list',
+            args: {
+                doctype: 'Brand',
+                fields: ['name'],
+                limit_page_length: 0
+            },
+            callback: (r) => {
+                this.brands_cache = r.message || [];
+            }
+        });
+    }
+
+    navigateResults(container, direction) {
+        const $results = this.page.wrapper.find(container);
+        const $items = $results.find('.dropdown-result');
+        const $highlighted = $results.find('.highlighted');
+
+        if (!$items.length) return;
+
+        let index = $highlighted.length ? $items.index($highlighted) : -1;
+
+        if (direction === 'down') {
+            index = (index + 1) % $items.length;
+        } else {
+            index = index <= 0 ? $items.length - 1 : index - 1;
+        }
+
+        $items.removeClass('highlighted');
+        $items.eq(index).addClass('highlighted');
+    }
+
     update_ownership_days() {
         const duration = parseInt(this.page.wrapper.find('.contract-duration').val()) || 60;
         const grace = parseInt(this.page.wrapper.find('.grace-period').val()) || 14;
@@ -236,8 +364,10 @@ class QuickIntake {
     }
 
     search_seller(query) {
+        const $results = this.page.wrapper.find('.seller-results');
+
         if (!query) {
-            this.page.wrapper.find('.seller-results').empty();
+            $results.removeClass('show').empty();
             return;
         }
 
@@ -254,18 +384,20 @@ class QuickIntake {
         const $results = this.page.wrapper.find('.seller-results');
 
         if (!sellers.length) {
-            $results.html('<div class="no-results p-2 text-muted">No sellers found - click "New Seller" to register</div>');
+            $results.html('<div class="no-results">No sellers found - click "New Seller" to register</div>');
+            $results.addClass('show');
             return;
         }
 
-        const html = sellers.map(s => `
-            <div class="seller-result p-2 border-bottom" data-name="${s.name}" style="cursor: pointer;">
+        const html = sellers.map((s, index) => `
+            <div class="dropdown-result seller-result ${index === 0 ? 'highlighted' : ''}"
+                 data-name="${s.name}">
                 <div class="seller-name font-weight-bold">${s.consignor_name}</div>
                 <div class="seller-info text-muted small">${s.consignor_code} | ${s.email} | ${s.phone}</div>
             </div>
         `).join('');
 
-        $results.html(html);
+        $results.html(html).addClass('show');
 
         // Bind click
         $results.find('.seller-result').on('click', (e) => {
@@ -278,7 +410,7 @@ class QuickIntake {
         frappe.db.get_doc('Consignor', name).then(doc => {
             this.current_seller = doc;
             this.page.wrapper.find('.seller-search').hide();
-            this.page.wrapper.find('.seller-results').empty();
+            this.page.wrapper.find('.seller-results').removeClass('show').empty();
             this.page.wrapper.find('.selected-seller').show();
             this.page.wrapper.find('.seller-display-name').text(
                 `${doc.consignor_name} (${doc.consignor_code})`
@@ -387,8 +519,11 @@ class QuickIntake {
                         placeholder="Description..." value="${category}">
                 </td>
                 <td>
-                    <input type="text" class="form-control form-control-sm item-brand"
-                        placeholder="Brand">
+                    <div class="brand-search-wrapper">
+                        <input type="text" class="form-control form-control-sm item-brand"
+                            placeholder="Brand... (Tab to select)" autocomplete="off">
+                        <div class="brand-results dropdown-results"></div>
+                    </div>
                 </td>
                 <td>
                     <select class="form-control form-control-sm item-size">
@@ -431,8 +566,194 @@ class QuickIntake {
         `;
 
         this.page.wrapper.find('.items-tbody').append(row);
-        this.page.wrapper.find(`tr[data-id="${id}"] .item-desc`).focus();
+
+        const $newRow = this.page.wrapper.find(`tr[data-id="${id}"]`);
+        $newRow.find('.item-desc').focus();
+
+        // Bind brand search events for this row
+        this.bindBrandSearch($newRow);
+
         this.update_totals();
+    }
+
+    bindBrandSearch($row) {
+        const me = this;
+        const $brandInput = $row.find('.item-brand');
+        const $brandResults = $row.find('.brand-results');
+
+        // Brand search input
+        $brandInput.on('input', frappe.utils.debounce((e) => {
+            const query = e.target.value;
+            this.searchBrands(query, $brandResults, $brandInput);
+        }, 300));
+
+        // Brand keyboard navigation
+        $brandInput.on('keydown', (e) => {
+            if (e.key === 'Tab' && !e.shiftKey) {
+                const $firstResult = $brandResults.find('.dropdown-result:first');
+
+                if ($firstResult.length && $brandResults.hasClass('show')) {
+                    e.preventDefault();
+
+                    if ($firstResult.hasClass('create-new')) {
+                        const brandName = $brandInput.val();
+                        this.createBrand(brandName, $brandInput, $brandResults);
+                    } else {
+                        const brand = $firstResult.data('brand');
+                        this.selectBrand(brand, $brandInput, $brandResults);
+                    }
+
+                    // Move to next field
+                    setTimeout(() => {
+                        $row.find('.item-size').focus();
+                    }, 100);
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.navigateBrandResults($brandResults, 'down');
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.navigateBrandResults($brandResults, 'up');
+            } else if (e.key === 'Enter') {
+                const $highlighted = $brandResults.find('.highlighted');
+                if ($highlighted.length) {
+                    e.preventDefault();
+
+                    if ($highlighted.hasClass('create-new')) {
+                        const brandName = $brandInput.val();
+                        this.createBrand(brandName, $brandInput, $brandResults);
+                    } else {
+                        const brand = $highlighted.data('brand');
+                        this.selectBrand(brand, $brandInput, $brandResults);
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                $brandResults.removeClass('show').empty();
+            }
+        });
+
+        // Click outside to close
+        $brandInput.on('blur', () => {
+            setTimeout(() => {
+                if (!$brandResults.is(':hover')) {
+                    $brandResults.removeClass('show');
+                }
+            }, 200);
+        });
+    }
+
+    searchBrands(query, $results, $input) {
+        if (!query) {
+            $results.removeClass('show').empty();
+            return;
+        }
+
+        // Search in cached brands
+        const matches = this.brands_cache.filter(b =>
+            b.name.toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 10);
+
+        this.showBrandResults(matches, query, $results, $input);
+    }
+
+    showBrandResults(brands, query, $results, $input) {
+        let html = '';
+
+        if (brands.length === 0) {
+            html = `
+                <div class="dropdown-result create-new highlighted" data-brand="${query}">
+                    <i class="fa fa-plus"></i> Create new brand: "<strong>${query}</strong>"
+                </div>
+            `;
+        } else {
+            html = brands.map((b, index) => `
+                <div class="dropdown-result ${index === 0 ? 'highlighted' : ''}"
+                     data-brand="${b.name}">
+                    ${b.name}
+                </div>
+            `).join('');
+
+            // Add create option if exact match not found
+            const exactMatch = brands.find(b => b.name.toLowerCase() === query.toLowerCase());
+            if (!exactMatch) {
+                html += `
+                    <div class="dropdown-result create-new" data-brand="${query}">
+                        <i class="fa fa-plus"></i> Create new brand: "<strong>${query}</strong>"
+                    </div>
+                `;
+            }
+        }
+
+        $results.html(html).addClass('show');
+
+        // Bind click events
+        $results.find('.dropdown-result').on('click', (e) => {
+            const $item = $(e.currentTarget);
+            const brand = $item.data('brand');
+
+            if ($item.hasClass('create-new')) {
+                this.createBrand(brand, $input, $results);
+            } else {
+                this.selectBrand(brand, $input, $results);
+            }
+        });
+    }
+
+    navigateBrandResults($results, direction) {
+        const $items = $results.find('.dropdown-result');
+        const $highlighted = $results.find('.highlighted');
+
+        if (!$items.length) return;
+
+        let index = $highlighted.length ? $items.index($highlighted) : -1;
+
+        if (direction === 'down') {
+            index = (index + 1) % $items.length;
+        } else {
+            index = index <= 0 ? $items.length - 1 : index - 1;
+        }
+
+        $items.removeClass('highlighted');
+        $items.eq(index).addClass('highlighted');
+    }
+
+    selectBrand(brand, $input, $results) {
+        $input.val(brand);
+        $results.removeClass('show').empty();
+    }
+
+    createBrand(brandName, $input, $results) {
+        if (!brandName) return;
+
+        frappe.call({
+            method: 'frappe.client.insert',
+            args: {
+                doc: {
+                    doctype: 'Brand',
+                    brand: brandName
+                }
+            },
+            callback: (r) => {
+                if (r.message) {
+                    // Add to cache
+                    this.brands_cache.push({name: brandName});
+
+                    // Set the value
+                    $input.val(brandName);
+                    $results.removeClass('show').empty();
+
+                    frappe.show_alert({
+                        message: `Brand "${brandName}" created`,
+                        indicator: 'green'
+                    }, 3);
+                }
+            },
+            error: (r) => {
+                // If brand already exists or other error
+                $input.val(brandName);
+                $results.removeClass('show').empty();
+            }
+        });
     }
 
     update_totals() {

@@ -128,20 +128,14 @@ def create_consignment_item(consignor, item_data):
     item.standard_rate = flt(item_data.get('price', 0))
 
     # Custom fields
-    custom_fields = {}
     if item_data.get('size'):
-        custom_fields['size'] = item_data.get('size')
+        item.db_set('size', item_data.get('size'), update_modified=False)
     if item_data.get('color'):
-        custom_fields['color'] = item_data.get('color')
+        item.db_set('color', item_data.get('color'), update_modified=False)
     if item_data.get('condition'):
-        custom_fields['condition'] = item_data.get('condition')
+        item.db_set('condition', item_data.get('condition'), update_modified=False)
 
     item.insert()
-
-    # Set custom fields after insert
-    if custom_fields:
-        for field, value in custom_fields.items():
-            frappe.db.set_value('Item', item.name, field, value)
 
     return item
 
