@@ -20,7 +20,7 @@ def get_portal_data():
     # Get statistics
     stats = frappe.db.sql("""
         SELECT
-            COUNT(CASE WHEN consignment_status = 'On Consignment' THEN 1 END) as active_items,
+            COUNT(CASE WHEN consignment_status = 'Active' THEN 1 END) as active_items,
             COUNT(CASE WHEN consignment_status = 'Sold' THEN 1 END) as sold_items,
             COUNT(CASE WHEN consignment_status = 'Awaiting Pickup' THEN 1 END) as expiring_items,
             COUNT(*) as total_items
@@ -79,7 +79,7 @@ def get_portal_data():
         FROM `tabItem` i
         WHERE i.consignor = %s
         AND i.is_consignment = 1
-        AND i.consignment_status IN ('On Consignment', 'Awaiting Pickup')
+        AND i.consignment_status IN ('Active', 'Awaiting Pickup')
         ORDER BY i.creation DESC
         LIMIT 50
     """, consignor, as_dict=True)

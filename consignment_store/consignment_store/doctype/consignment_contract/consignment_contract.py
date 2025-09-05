@@ -48,7 +48,7 @@ class ConsignmentContract(Document):
                 'consignment_contract': self.name,
                 'consignment_expiry_date': self.contract_end_date,
                 'ownership_transfer_date': self.ownership_transfer_date,
-                'consignment_status': 'On Consignment'
+                'consignment_status': 'Pending Signature'
             })
 
         # Send email with signature link
@@ -134,6 +134,11 @@ class ConsignmentContract(Document):
         self.db_set('consignor_signer_name', signer_name)
         self.db_set('consignor_signer_ip', signer_ip)
         self.db_set('contract_status', 'Active')
+
+        # Update all items to Active status
+        for item in self.items:
+            frappe.db.set_value('Item', item.item_code, 'consignment_status', 'Active')
+            item.db_set('status', 'Active')
 
         # Send confirmation
         self.send_signature_confirmation()
@@ -260,7 +265,7 @@ class ConsignmentContract(Document):
                 frappe.db.set_value('Item', item.item_code, {
                     'is_stock_item': 1,  # NOW it becomes stock item
                     'is_consignment': 0,  # No longer consignment
-                    'consignment_status': 'Owned',
+                    'consignment_status': 'Ownership Transferred',
                     'standard_rate': markdown_price,
                     'item_group': 'Clearance'
                 })

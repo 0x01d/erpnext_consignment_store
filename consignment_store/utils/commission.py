@@ -190,7 +190,7 @@ def cancel_commission(doc, method=None):
     for item in doc.items:
         if item.is_consignment:
             frappe.db.set_value('Item', item.item_code,
-                'consignment_status', 'On Consignment'
+                'consignment_status', 'Active'
             )
 
             # Update contract item status back to Active
