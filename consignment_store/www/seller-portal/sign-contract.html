@@ -1,0 +1,860 @@
+<!-- consignment_store/www/seller-portal/sign-contract.html -->
+{% extends "templates/web.html" %}
+{% block title %}Sign Contract{% endblock %}
+
+{% block page_content %}
+<div class="signing-container">
+    <div id="contract-content"></div>
+</div>
+
+<style>
+:root {
+    --pastel-pink: #FFB6C1;
+    --pastel-blue: #87CEEB;
+    --pastel-purple: #DDA0DD;
+    --pastel-green: #98FB98;
+    --pastel-yellow: #F0E68C;
+    --pastel-lavender: #E6E6FA;
+}
+
+.signing-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.contract-wrapper {
+    background: white;
+    border-radius: 25px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    animation: slideIn 0.5s ease;
+}
+
+.contract-header {
+    background: linear-gradient(135deg, var(--pastel-pink) 0%, var(--pastel-lavender) 100%);
+    padding: 40px;
+    text-align: center;
+    color: white;
+}
+
+.contract-title {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.contract-subtitle {
+    font-size: 18px;
+    opacity: 0.95;
+}
+
+.contract-body {
+    padding: 40px;
+}
+
+.parties-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.party-card {
+    background: linear-gradient(135deg, #FAFAFA 0%, #F5F5FF 100%);
+    border-radius: 15px;
+    padding: 25px;
+    border: 2px solid var(--pastel-lavender);
+}
+
+.party-title {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.party-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.party-detail {
+    color: #666;
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.contract-details {
+    background: white;
+    border: 2px solid var(--pastel-lavender);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
+}
+
+.detail-item {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #FAFAFA 0%, #F5F5FF 100%);
+    border-radius: 12px;
+}
+
+.detail-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 8px;
+}
+
+.detail-value {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--pastel-purple) 0%, var(--pastel-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.items-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 2px solid var(--pastel-lavender);
+}
+
+.items-table th {
+    background: linear-gradient(135deg, var(--pastel-lavender) 0%, #F0E6FA 100%);
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #666;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.items-table td {
+    padding: 15px;
+    border-top: 1px solid #F0F0F0;
+}
+
+.items-table tr:hover {
+    background: #FAFAFA;
+}
+
+.price-value {
+    font-weight: 600;
+    color: var(--pastel-green);
+}
+
+.commission-value {
+    color: var(--pastel-purple);
+    font-weight: 500;
+}
+
+.terms-section {
+    background: linear-gradient(135deg, #FFF5F5 0%, #FFF0F5 100%);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.terms-content {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--pastel-pink);
+}
+
+.terms-content h4 {
+    color: var(--pastel-purple);
+    margin-bottom: 20px;
+}
+
+.terms-content ol {
+    line-height: 1.8;
+}
+
+.terms-content li {
+    margin-bottom: 15px;
+    color: #555;
+}
+
+.already-signed {
+    background: linear-gradient(135deg, var(--pastel-green) 0%, #E8F5E9 100%);
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    margin: 30px 0;
+}
+
+.signed-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+.signed-message {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2E7D32;
+    margin-bottom: 10px;
+}
+
+.signed-date {
+    color: #666;
+    font-size: 16px;
+}
+
+.signature-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    border: 3px dashed var(--pastel-purple);
+    margin-bottom: 30px;
+}
+
+.signature-instructions {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.signature-instructions h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.signature-instructions p {
+    color: #666;
+    font-size: 14px;
+}
+
+.signature-pad-wrapper {
+    position: relative;
+    background: white;
+    border: 2px solid var(--pastel-lavender);
+    border-radius: 10px;
+    margin: 20px 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+#signaturePad {
+    width: 100%;
+    height: 200px;
+    cursor: crosshair;
+}
+
+.signature-line {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+    right: 50px;
+    border-bottom: 2px dashed #DDD;
+}
+
+.signature-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 12px 30px;
+    border-radius: 25px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-clear {
+    background: white;
+    border: 2px solid var(--pastel-lavender);
+    color: #666;
+}
+
+.btn-clear:hover {
+    background: var(--pastel-lavender);
+}
+
+.agreement-section {
+    background: linear-gradient(135deg, #F0F8FF 0%, #E6F3FF 100%);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.agreement-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.agreement-checkbox input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.agreement-text {
+    flex: 1;
+    color: #444;
+    line-height: 1.6;
+}
+
+.signer-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-field {
+    padding: 12px 20px;
+    border: 2px solid var(--pastel-lavender);
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.input-field:focus {
+    border-color: var(--pastel-purple);
+    box-shadow: 0 0 0 4px rgba(221, 160, 221, 0.1);
+}
+
+.submit-section {
+    text-align: center;
+    padding: 30px;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, var(--pastel-green) 0%, var(--pastel-blue) 100%);
+    color: white;
+    padding: 18px 60px;
+    font-size: 20px;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(152, 251, 152, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(152, 251, 152, 0.4);
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    animation: none;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.back-link:hover {
+    color: var(--pastel-purple);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--pastel-purple);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 10px 30px rgba(152, 251, 152, 0.3);
+    }
+    50% {
+        box-shadow: 0 10px 40px rgba(152, 251, 152, 0.5);
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.success-message {
+    background: linear-gradient(135deg, var(--pastel-green) 0%, #E8F5E9 100%);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    animation: slideIn 0.5s ease;
+}
+
+.success-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+}
+
+.success-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2E7D32;
+    margin-bottom: 15px;
+}
+
+.success-text {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.success-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.btn-dashboard {
+    background: linear-gradient(135deg, var(--pastel-purple) 0%, var(--pastel-blue) 100%);
+    color: white;
+}
+
+.btn-dashboard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(221, 160, 221, 0.3);
+}
+
+@media (max-width: 768px) {
+    .parties-section {
+        grid-template-columns: 1fr;
+    }
+
+    .signer-info {
+        grid-template-columns: 1fr;
+    }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+// Get contract token from URL
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('token');
+
+if (!token) {
+    showError('Invalid contract link');
+} else {
+    loadContract();
+}
+
+function loadContract() {
+    frappe.call({
+        method: 'consignment_store.api.portal.get_contract_for_signing',
+        args: { token: token },
+        callback: function(r) {
+            if (r.message) {
+                renderContract(r.message);
+            } else {
+                showError('Contract not found or already expired');
+            }
+        }
+    });
+}
+
+function renderContract(contract) {
+    const container = document.getElementById('contract-content');
+
+    if (contract.consignor_signed) {
+        // Already signed
+        container.innerHTML = `
+            <div class="contract-wrapper">
+                <div class="contract-header">
+                    <h1 class="contract-title">📄 Consignment Contract</h1>
+                    <p class="contract-subtitle">${contract.name}</p>
+                </div>
+
+                <div class="contract-body">
+                    <div class="already-signed">
+                        <div class="signed-icon">✅</div>
+                        <div class="signed-message">Contract Already Signed</div>
+                        <div class="signed-date">Signed on ${new Date(contract.consignor_signed_date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</div>
+                    </div>
+
+                    <div class="submit-section">
+                        <a href="/seller-portal" class="btn btn-dashboard">
+                            📊 Go to Dashboard
+                        </a>
+                        <a href="/seller-portal" class="back-link">← Back to Portal</a>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // Need signature
+        const itemsHtml = contract.items.map(item => `
+            <tr>
+                <td>${item.item_code}</td>
+                <td>${item.item_name}</td>
+                <td class="price-value">€${item.retail_price.toFixed(2)}</td>
+                <td>${item.commission_rate}%</td>
+                <td class="commission-value">€${item.expected_commission.toFixed(2)}</td>
+            </tr>
+        `).join('');
+
+        container.innerHTML = `
+            <div class="contract-wrapper">
+                <div class="contract-header">
+                    <h1 class="contract-title">📝 Sign Your Consignment Contract</h1>
+                    <p class="contract-subtitle">Contract ${contract.name}</p>
+                </div>
+
+                <div class="contract-body">
+                    <div class="parties-section">
+                        <div class="party-card">
+                            <div class="party-title">Consignor</div>
+                            <div class="party-name">${contract.consignor_details.consignor_name}</div>
+                            <div class="party-detail">📧 ${contract.consignor_details.email}</div>
+                            <div class="party-detail">📱 ${contract.consignor_details.phone}</div>
+                            <div class="party-detail">🏷️ ${contract.consignor_details.consignor_code}</div>
+                        </div>
+
+                        <div class="party-card">
+                            <div class="party-title">Consignee</div>
+                            <div class="party-name">Your Store Name</div>
+                            <div class="party-detail">📧 store@example.com</div>
+                            <div class="party-detail">📱 +32 123 456 789</div>
+                            <div class="party-detail">📍 Store Address</div>
+                        </div>
+                    </div>
+
+                    <div class="contract-details">
+                        <h3 class="section-title">📊 Contract Details</h3>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Start Date</div>
+                                <div class="detail-value">${new Date(contract.contract_date).toLocaleDateString()}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">End Date</div>
+                                <div class="detail-value">${new Date(contract.contract_end_date).toLocaleDateString()}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Duration</div>
+                                <div class="detail-value">${contract.contract_duration_days} days</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Grace Period</div>
+                                <div class="detail-value">${contract.grace_period_days} days</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Total Items</div>
+                                <div class="detail-value">${contract.total_items}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Total Value</div>
+                                <div class="detail-value">€${contract.total_retail_value.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="items-section">
+                        <h3 class="section-title">📦 Consigned Items</h3>
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Item Code</th>
+                                    <th>Description</th>
+                                    <th>Retail Price</th>
+                                    <th>Commission</th>
+                                    <th>Expected</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="terms-section">
+                        <h3 class="section-title">📋 Terms & Conditions</h3>
+                        <div class="terms-content">
+                            ${contract.contract_terms}
+                        </div>
+                    </div>
+
+                    <div class="agreement-section">
+                        <div class="agreement-checkbox">
+                            <input type="checkbox" id="agreeTerms" />
+                            <label for="agreeTerms" class="agreement-text">
+                                I have read and agree to all terms and conditions stated above. I understand that:
+                                <ul>
+                                    <li>Items remain my property until sold or ownership transfers after ${contract.grace_period_days} days past contract end</li>
+                                    <li>The store retains the agreed commission percentage on all sales</li>
+                                    <li>I must collect unsold items by ${new Date(contract.ownership_transfer_date).toLocaleDateString()}</li>
+                                    <li>This electronic signature is legally binding</li>
+                                </ul>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="signature-section">
+                        <div class="signature-instructions">
+                            <h3>✍️ Your Signature</h3>
+                            <p>Please sign in the box below using your mouse or touchscreen</p>
+                        </div>
+
+                        <div class="signature-pad-wrapper">
+                            <canvas id="signaturePad"></canvas>
+                            <div class="signature-line"></div>
+                        </div>
+
+                        <div class="signature-actions">
+                            <button class="btn btn-clear" onclick="clearSignature()">
+                                🔄 Clear Signature
+                            </button>
+                        </div>
+
+                        <div class="signer-info">
+                            <div class="input-group">
+                                <label class="input-label">Your Full Name</label>
+                                <input type="text" id="signerName" class="input-field"
+                                       value="${contract.consignor_details.consignor_name}"
+                                       placeholder="Enter your full name" />
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Date</label>
+                                <input type="text" class="input-field"
+                                       value="${new Date().toLocaleDateString()}" disabled />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="submit-section">
+                        <button class="btn btn-submit" id="submitBtn" onclick="submitSignature()" disabled>
+                            🔐 Sign Contract
+                        </button>
+                        <a href="/seller-portal" class="back-link">← Back to Portal</a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Initialize signature pad
+        initSignaturePad();
+
+        // Setup validation
+        setupValidation();
+    }
+}
+
+let signaturePad;
+
+function initSignaturePad() {
+    const canvas = document.getElementById('signaturePad');
+
+    // Resize canvas
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255, 255, 255)',
+        penColor: 'rgb(0, 0, 0)',
+        minWidth: 1,
+        maxWidth: 3,
+        throttle: 16,
+        minDistance: 3
+    });
+
+    signaturePad.addEventListener("endStroke", validateForm);
+}
+
+function clearSignature() {
+    if (signaturePad) {
+        signaturePad.clear();
+        validateForm();
+    }
+}
+
+function setupValidation() {
+    const agreeCheckbox = document.getElementById('agreeTerms');
+    const signerName = document.getElementById('signerName');
+
+    agreeCheckbox.addEventListener('change', validateForm);
+    signerName.addEventListener('input', validateForm);
+
+    validateForm();
+}
+
+function validateForm() {
+    const agreeCheckbox = document.getElementById('agreeTerms');
+    const signerName = document.getElementById('signerName');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const isValid = agreeCheckbox.checked &&
+                   signerName.value.trim() !== '' &&
+                   signaturePad && !signaturePad.isEmpty();
+
+    submitBtn.disabled = !isValid;
+}
+
+function submitSignature() {
+    const signerName = document.getElementById('signerName');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (!signaturePad || signaturePad.isEmpty()) {
+        alert('Please provide your signature');
+        return;
+    }
+
+    if (!signerName.value.trim()) {
+        alert('Please enter your full name');
+        return;
+    }
+
+    // Disable button and show loading
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '🔐 Signing... <span class="loading-spinner"></span>';
+
+    // Get signature as base64
+    const signatureData = signaturePad.toDataURL();
+
+    // Submit signature
+    frappe.call({
+        method: 'consignment_store.api.portal.sign_contract',
+        args: {
+            token: token,
+            signature_data: signatureData,
+            signer_name: signerName.value.trim()
+        },
+        callback: function(r) {
+            if (r.message && r.message.success) {
+                showSuccess();
+            } else {
+                alert('Error signing contract. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '🔐 Sign Contract';
+            }
+        },
+        error: function() {
+            alert('Network error. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '🔐 Sign Contract';
+        }
+    });
+}
+
+function showSuccess() {
+    const container = document.getElementById('contract-content');
+    container.innerHTML = `
+        <div class="success-message">
+            <div class="success-icon">🎉</div>
+            <h2 class="success-title">Contract Signed Successfully!</h2>
+            <p class="success-text">
+                Thank you for signing your consignment contract.
+                Your items are now active for sale. You'll receive a confirmation email shortly.
+            </p>
+            <div class="success-actions">
+                <a href="/seller-portal" class="btn btn-dashboard">
+                    📊 Go to Dashboard
+                </a>
+            </div>
+        </div>
+    `;
+}
+
+function showError(message) {
+    const container = document.getElementById('contract-content');
+    container.innerHTML = `
+        <div class="contract-wrapper">
+            <div class="contract-body" style="text-align: center; padding: 60px;">
+                <div style="font-size: 60px; margin-bottom: 20px;">⚠️</div>
+                <h2 style="color: #666; margin-bottom: 20px;">Error</h2>
+                <p style="color: #999; font-size: 18px; margin-bottom: 30px;">${message}</p>
+                <a href="/seller-portal" class="btn btn-dashboard">
+                    ← Back to Portal
+                </a>
+            </div>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

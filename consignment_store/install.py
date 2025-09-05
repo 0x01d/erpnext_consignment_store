@@ -80,8 +80,8 @@ def get_custom_fields():
                 fieldname='consignment_status',
                 label='Status',
                 fieldtype='Select',
-                options='On Consignment\nAwaiting Pickup\nOwned\nSold\nReturned',
-                default='On Consignment',
+                options='Pending Signature\nActive\nAwaiting Pickup\nSold\nReturned\nOwnership Transferred\nCancelled',
+                default='Pending Signature',
                 depends_on='is_consignment',
                 insert_after='ownership_transfer_date'
             ),

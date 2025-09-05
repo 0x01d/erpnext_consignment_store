@@ -56,8 +56,8 @@
             "fieldtype": "Select",
             "in_list_view": 1,
             "label": "Status",
-            "options": "Active\nSold\nReturned\nOwnership Transferred",
-            "default": "Active",
+            "options": "Pending Signature\nActive\nAwaiting Pickup\nSold\nReturned\nOwnership Transferred\nCancelled",
+            "default": "Pending Signature",
             "read_only": 1
         },
         {

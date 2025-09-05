@@ -1,7 +1,6 @@
 # consignment_store/api/intake.py
 """
-Fixed intake process that creates contracts and doesn't affect stock value
-Replace your existing intake.py with this
+Updated intake process with digital signature support
 """
 import frappe
 from frappe import _
@@ -36,10 +35,10 @@ def create_consignor(**kwargs):
     return consignor
 
 @frappe.whitelist()
-def process_intake(consignor, items):
+def process_intake(consignor, items, contract_duration=60, grace_period=14):
     """
-    Process consignment intake with contract creation
-    NO STOCK ENTRIES - items are not our inventory yet
+    Process consignment intake with digital contract
+    Creates contract and sends for digital signature
     """
     if isinstance(items, str):
         items = json.loads(items)
@@ -47,16 +46,22 @@ def process_intake(consignor, items):
     if not items:
         frappe.throw(_("No items to process"))
 
+    # Validate consignor has email for digital signature
+    consignor_doc = frappe.get_doc('Consignor', consignor)
+    if not consignor_doc.email:
+        frappe.throw(_("Consignor email is required for digital signature"))
+
     # Create Consignment Contract
     contract = frappe.new_doc('Consignment Contract')
     contract.consignor = consignor
     contract.contract_date = nowdate()
-    contract.contract_duration_days = 60  # 2 months default
-    contract.grace_period_days = 14  # 2 weeks grace
+    contract.contract_duration_days = int(contract_duration)
+    contract.grace_period_days = int(grace_period)
+    contract.contract_status = 'Pending Signature'
 
     created_items = []
 
-    # Create items WITHOUT stock value
+    # Create items WITHOUT stock value (not our inventory yet)
     for item_data in items:
         item = create_consignment_item(consignor, item_data)
         created_items.append(item)
@@ -70,28 +75,26 @@ def process_intake(consignor, items):
             'status': 'Active'
         })
 
-    # Submit contract
+    # Insert and submit contract to trigger signature request
     contract.insert()
-    contract.submit()
+    contract.submit()  # This will send the signature email
 
-    # Generate labels
+    # Generate labels for printing
     from consignment_store.utils.qr_generator import QRGenerator
     qr_gen = QRGenerator()
     labels_html = qr_gen.generate_batch_labels(created_items)
 
-    # Generate contract for signing
-    contract_html = generate_contract_html(contract, created_items)
-
-    # Send notification (optional)
-    # from consignment_store.utils.notifications import send_intake_confirmation
-    # send_intake_confirmation(consignor, created_items)
+    # Generate preview HTML
+    preview_html = generate_contract_preview(contract, created_items)
 
     return {
         'success': True,
         'contract_id': contract.name,
         'items_count': len(created_items),
         'labels_html': labels_html,
-        'contract_html': contract_html
+        'preview_html': preview_html,
+        'signature_sent': True,
+        'consignor_email': consignor_doc.email
     }
 
 def create_consignment_item(consignor, item_data):
@@ -106,7 +109,7 @@ def create_consignment_item(consignor, item_data):
 
     item = frappe.new_doc('Item')
     item.item_code = item_code
-    item.item_name = item_data.get('description')
+    item.item_name = item_data.get('description', '')
     item.item_group = 'Consignment'
     item.stock_uom = 'Nos'
 
@@ -119,28 +122,26 @@ def create_consignment_item(consignor, item_data):
     item.consignor = consignor
     item.consignment_code = item_code
     item.commission_rate = flt(item_data.get('commission_rate', 50))
-    item.consignment_status = 'On Consignment'
-    item.consignment_expiry_date = add_days(nowdate(), 60)
-    item.ownership_transfer_date = add_days(nowdate(), 74)
+    item.consignment_status = 'Pending Signature'
 
     # Item details
     item.brand = item_data.get('brand', '')
     item.standard_rate = flt(item_data.get('price', 0))
 
-    # Custom fields
+    # Custom fields if they exist
     if item_data.get('size'):
-        item.db_set('size', item_data.get('size'), update_modified=False)
+        item.size = item_data.get('size')
     if item_data.get('color'):
-        item.db_set('color', item_data.get('color'), update_modified=False)
+        item.color = item_data.get('color')
     if item_data.get('condition'):
-        item.db_set('condition', item_data.get('condition'), update_modified=False)
+        item.condition = item_data.get('condition')
 
     item.insert()
 
     return item
 
-def generate_contract_html(contract, items):
-    """Generate printable contract HTML"""
+def generate_contract_preview(contract, items):
+    """Generate preview HTML for contract confirmation"""
     consignor = frappe.get_doc('Consignor', contract.consignor)
     company = frappe.db.get_single_value('Global Defaults', 'default_company')
 
@@ -150,8 +151,8 @@ def generate_contract_html(contract, items):
         <tr>
             <td>{item.item_code}</td>
             <td>{item.item_name}</td>
-            <td style="text-align: right;">€{item.standard_rate:.2f}</td>
-            <td style="text-align: center;">{item.commission_rate}%</td>
+            <td class="text-right">€{item.standard_rate:.2f}</td>
+            <td class="text-center">{item.commission_rate}%</td>
         </tr>
         """
 
@@ -162,214 +163,359 @@ def generate_contract_html(contract, items):
         <style>
             @page {{ size: A4; margin: 15mm; }}
             body {{
-                font-family: 'Segoe UI', Arial, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 line-height: 1.6;
                 color: #333;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
             }}
-            .header {{
+            .success-header {{
+                background: linear-gradient(135deg, #98FB98 0%, #87CEEB 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
                 text-align: center;
-                border-bottom: 2px solid #333;
-                padding-bottom: 20px;
                 margin-bottom: 30px;
+            }}
+            .success-icon {{
+                font-size: 60px;
+                margin-bottom: 20px;
             }}
             h1 {{
                 margin: 0;
-                font-size: 24pt;
-                color: #000;
+                font-size: 28pt;
             }}
-            .contract-info {{
-                text-align: center;
-                margin: 10px 0;
-                font-size: 11pt;
-            }}
-            .parties {{
-                display: flex;
-                justify-content: space-between;
-                margin: 30px 0;
+            .info-card {{
+                background: #F8F9FA;
+                border-radius: 10px;
                 padding: 20px;
-                background: #f9f9f9;
-                border-radius: 8px;
+                margin-bottom: 20px;
             }}
-            .party {{
-                width: 45%;
-            }}
-            .party h3 {{
-                margin-top: 0;
-                color: #444;
-                border-bottom: 1px solid #ddd;
-                padding-bottom: 5px;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
+            .info-grid {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
                 margin: 20px 0;
             }}
-            th {{
-                background: #444;
-                color: white;
-                padding: 10px;
-                text-align: left;
-            }}
-            td {{
-                border: 1px solid #ddd;
-                padding: 8px;
-            }}
-            tr:nth-child(even) {{
-                background: #f9f9f9;
-            }}
-            .totals {{
-                background: #e9e9e9;
-                font-weight: bold;
-            }}
-            .terms {{
-                margin: 30px 0;
-                padding: 20px;
-                background: #f0f8ff;
+            .info-item {{
+                padding: 15px;
+                background: white;
                 border-radius: 8px;
-                border: 1px solid #4CAF50;
+                border-left: 4px solid #DDA0DD;
             }}
-            .terms h3 {{
-                color: #4CAF50;
+            .info-label {{
+                font-size: 12px;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }}
+            .info-value {{
+                font-size: 20px;
+                font-weight: 600;
+                color: #333;
+                margin-top: 5px;
+            }}
+            .items-table {{
+                width: 100%;
+                border-collapse: collapse;
+                background: white;
+                border-radius: 10px;
+                overflow: hidden;
+                margin: 20px 0;
+            }}
+            .items-table th {{
+                background: #E6E6FA;
+                padding: 12px;
+                text-align: left;
+                font-weight: 600;
+                color: #666;
+            }}
+            .items-table td {{
+                padding: 12px;
+                border-top: 1px solid #F0F0F0;
+            }}
+            .text-right {{ text-align: right; }}
+            .text-center {{ text-align: center; }}
+            .next-steps {{
+                background: linear-gradient(135deg, #FFB6C1 0%, #FFDAB9 100%);
+                border-radius: 10px;
+                padding: 25px;
+                margin: 30px 0;
+                color: #333;
+            }}
+            .next-steps h3 {{
                 margin-top: 0;
+                color: #C71585;
             }}
-            .terms ol {{
+            .next-steps ol {{
                 margin: 10px 0;
                 padding-left: 20px;
             }}
-            .terms li {{
+            .next-steps li {{
                 margin: 8px 0;
             }}
-            .signatures {{
-                display: flex;
-                justify-content: space-between;
-                margin-top: 60px;
-                page-break-inside: avoid;
-            }}
-            .signature {{
-                width: 40%;
+            .signature-notice {{
+                background: #FFF3E0;
+                border: 2px solid #FFB300;
+                border-radius: 10px;
+                padding: 20px;
                 text-align: center;
+                margin: 30px 0;
             }}
-            .signature-line {{
-                border-top: 2px solid #333;
-                margin-top: 50px;
-                padding-top: 10px;
+            .signature-notice-icon {{
+                font-size: 40px;
+                margin-bottom: 10px;
+            }}
+            .signature-notice-text {{
+                font-size: 18px;
+                font-weight: 600;
+                color: #E65100;
+                margin-bottom: 10px;
+            }}
+            .signature-notice-email {{
+                color: #666;
+                font-size: 14px;
+            }}
+            .print-button {{
+                background: linear-gradient(135deg, #87CEEB 0%, #B0E0E6 100%);
+                color: white;
+                padding: 15px 30px;
+                border: none;
+                border-radius: 25px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                margin: 20px auto;
+                display: block;
+                box-shadow: 0 5px 15px rgba(135, 206, 235, 0.3);
+            }}
+            .print-button:hover {{
+                box-shadow: 0 8px 20px rgba(135, 206, 235, 0.4);
             }}
             @media print {{
                 .no-print {{ display: none; }}
                 body {{ margin: 0; }}
             }}
-            .print-button {{
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 12px 24px;
-                background: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 14pt;
-                cursor: pointer;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            }}
-            .print-button:hover {{
-                background: #45a049;
-            }}
         </style>
     </head>
     <body>
-        <button class="no-print print-button" onclick="window.print()">
-            📄 Print Contract
-        </button>
+        <div class="success-header">
+            <div class="success-icon">✅</div>
+            <h1>Contract Created Successfully!</h1>
+            <p style="font-size: 18px; margin: 10px 0 0 0;">Contract #{contract.name}</p>
+        </div>
 
-        <div class="header">
-            <h1>CONSIGNMENT AGREEMENT</h1>
-            <div class="contract-info">
-                Contract No: <strong>{contract.name}</strong> |
-                Date: <strong>{contract.contract_date}</strong>
+        <div class="signature-notice">
+            <div class="signature-notice-icon">✉️</div>
+            <div class="signature-notice-text">Digital Signature Request Sent</div>
+            <div class="signature-notice-email">
+                An email has been sent to <strong>{consignor.email}</strong> with a link to digitally sign this contract.
             </div>
         </div>
 
-        <div class="parties">
-            <div class="party">
-                <h3>CONSIGNOR</h3>
-                <p>
-                    <strong>{consignor.consignor_name}</strong><br>
-                    Code: {consignor.consignor_code}<br>
-                    Email: {consignor.email}<br>
-                    Phone: {consignor.phone}<br>
-                    {f'ID: {consignor.id_number}' if consignor.id_number else ''}
-                </p>
-            </div>
-            <div class="party">
-                <h3>CONSIGNEE</h3>
-                <p>
-                    <strong>{company or 'Your Store Name'}</strong><br>
-                    [Store Address]<br>
-                    [Store Phone]<br>
-                    [Store Email]
-                </p>
+        <div class="info-card">
+            <h2 style="color: #7B68EE; margin-top: 0;">Contract Summary</h2>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Consignor</div>
+                    <div class="info-value">{consignor.consignor_name}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Code</div>
+                    <div class="info-value">{consignor.consignor_code}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Contract Period</div>
+                    <div class="info-value">{contract.contract_duration_days} days</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Grace Period</div>
+                    <div class="info-value">{contract.grace_period_days} days</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Total Items</div>
+                    <div class="info-value">{contract.total_items}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Total Value</div>
+                    <div class="info-value">€{contract.total_retail_value:.2f}</div>
+                </div>
             </div>
         </div>
 
-        <h3>CONSIGNED ITEMS</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th width="20%">Item Code</th>
-                    <th width="50%">Description</th>
-                    <th width="15%">Retail Price</th>
-                    <th width="15%">Commission</th>
-                </tr>
-            </thead>
-            <tbody>
-                {items_rows}
-            </tbody>
-            <tfoot>
-                <tr class="totals">
-                    <td colspan="2">TOTAL ({contract.total_items} items)</td>
-                    <td style="text-align: right;">€{contract.total_retail_value:.2f}</td>
-                    <td style="text-align: center;">€{contract.expected_commission:.2f}</td>
-                </tr>
-            </tfoot>
-        </table>
+        <div class="info-card">
+            <h3 style="color: #7B68EE;">Consigned Items</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item Code</th>
+                        <th>Description</th>
+                        <th>Retail Price</th>
+                        <th>Commission</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items_rows}
+                </tbody>
+            </table>
+        </div>
 
-        <div class="terms">
-            <h3>TERMS AND CONDITIONS</h3>
+        <div class="next-steps">
+            <h3>📋 Next Steps</h3>
             <ol>
-                <li><strong>Consignment Period:</strong> Items will be displayed for {contract.contract_duration_days} days from {contract.contract_date} until {contract.contract_end_date}.</li>
-                <li><strong>Commission:</strong> Consignee retains the agreed commission percentage on actual sale price.</li>
-                <li><strong>Pricing:</strong> Items priced as agreed. Store may offer promotions with consignor notification.</li>
-                <li><strong>Payment:</strong> Net proceeds paid monthly after minimum payout threshold is met.</li>
-                <li><strong>Collection Period:</strong> Unsold items must be collected within {contract.grace_period_days} days after contract end ({contract.contract_end_date} to {contract.ownership_transfer_date}).</li>
-                <li><strong>Ownership Transfer:</strong> Items not collected by {contract.ownership_transfer_date} automatically become property of the consignee at 30% of retail value.</li>
-                <li><strong>Liability:</strong> Consignee is not liable for theft, damage from normal wear, or force majeure events.</li>
-                <li><strong>Termination:</strong> Either party may terminate with 7 days written notice.</li>
+                <li><strong>Consignor signs contract:</strong> Check email for signature link</li>
+                <li><strong>Print labels:</strong> Use the label printing function to tag items</li>
+                <li><strong>Display items:</strong> Place items on the sales floor</li>
+                <li><strong>Track in portal:</strong> Monitor sales and performance online</li>
             </ol>
         </div>
 
-        <p><strong>By signing below, both parties agree to the terms and conditions stated above.</strong></p>
-
-        <div class="signatures">
-            <div class="signature">
-                <div class="signature-line">
-                    <strong>CONSIGNOR</strong><br>
-                    {consignor.consignor_name}<br>
-                    Date: _______________
-                </div>
-            </div>
-            <div class="signature">
-                <div class="signature-line">
-                    <strong>CONSIGNEE</strong><br>
-                    Store Representative<br>
-                    Date: _______________
-                </div>
-            </div>
+        <div style="text-align: center; margin: 40px 0;">
+            <button onclick="window.print()" class="print-button no-print">
+                🖨️ Print This Summary
+            </button>
         </div>
     </body>
     </html>
     """
 
     return html
+
+@frappe.whitelist()
+def resend_signature_request(contract_name):
+    """Resend signature request email for a contract"""
+    contract = frappe.get_doc('Consignment Contract', contract_name)
+
+    if contract.consignor_signed:
+        frappe.throw(_("Contract has already been signed"))
+
+    if contract.docstatus != 1:
+        frappe.throw(_("Contract must be submitted before sending signature request"))
+
+    # Send signature request
+    contract.send_signature_request()
+
+    return {
+        'success': True,
+        'message': f'Signature request sent to {frappe.db.get_value("Consignor", contract.consignor, "email")}'
+    }
+
+@frappe.whitelist()
+def get_unsigned_contracts(consignor=None):
+    """Get list of contracts pending signature"""
+    filters = {
+        'docstatus': 1,
+        'consignor_signed': 0
+    }
+
+    if consignor:
+        filters['consignor'] = consignor
+
+    contracts = frappe.db.get_all('Consignment Contract',
+        filters=filters,
+        fields=['name', 'consignor', 'contract_date', 'total_items',
+                'total_retail_value', 'signature_token'],
+        order_by='contract_date desc'
+    )
+
+    # Add consignor details
+    for contract in contracts:
+        contract['consignor_details'] = frappe.db.get_value('Consignor',
+            contract['consignor'],
+            ['consignor_name', 'email', 'phone'],
+            as_dict=True
+        )
+
+    return contracts
+
+@frappe.whitelist()
+def batch_create_items(consignor, item_data_list):
+    """Create multiple items in batch for a consignor"""
+    if isinstance(item_data_list, str):
+        item_data_list = json.loads(item_data_list)
+
+    created_items = []
+
+    for item_data in item_data_list:
+        try:
+            item = create_consignment_item(consignor, item_data)
+            created_items.append({
+                'success': True,
+                'item_code': item.name,
+                'item_name': item.item_name
+            })
+        except Exception as e:
+            created_items.append({
+                'success': False,
+                'error': str(e),
+                'item_data': item_data
+            })
+
+    return {
+        'total': len(item_data_list),
+        'successful': len([i for i in created_items if i.get('success')]),
+        'failed': len([i for i in created_items if not i.get('success')]),
+        'items': created_items
+    }
+
+@frappe.whitelist()
+def get_intake_statistics(days=30):
+    """Get intake statistics for dashboard"""
+    from_date = add_days(nowdate(), -days)
+
+    stats = {
+        'contracts_created': frappe.db.count('Consignment Contract', {
+            'contract_date': ['>=', from_date]
+        }),
+        'contracts_pending_signature': frappe.db.count('Consignment Contract', {
+            'docstatus': 1,
+            'consignor_signed': 0
+        }),
+        'items_added': frappe.db.count('Item', {
+            'creation': ['>=', from_date],
+            'is_consignment': 1
+        }),
+        'new_consignors': frappe.db.count('Consignor', {
+            'registration_date': ['>=', from_date]
+        })
+    }
+
+    # Get daily intake trend
+    daily_trend = frappe.db.sql("""
+        SELECT
+            DATE(contract_date) as date,
+            COUNT(*) as contracts,
+            SUM(total_items) as items,
+            SUM(total_retail_value) as value
+        FROM `tabConsignment Contract`
+        WHERE contract_date >= %s
+        GROUP BY DATE(contract_date)
+        ORDER BY date
+    """, from_date, as_dict=True)
+
+    stats['daily_trend'] = daily_trend
+
+    # Get top consignors by items
+    top_consignors = frappe.db.sql("""
+        SELECT
+            c.consignor_name,
+            c.consignor_code,
+            COUNT(i.name) as item_count,
+            SUM(i.standard_rate) as total_value
+        FROM `tabConsignor` c
+        JOIN `tabItem` i ON i.consignor = c.name
+        WHERE i.creation >= %s
+        AND i.is_consignment = 1
+        GROUP BY c.name
+        ORDER BY item_count DESC
+        LIMIT 10
+    """, from_date, as_dict=True)
+
+    stats['top_consignors'] = top_consignors
+
+    return stats
 
 @frappe.whitelist()
 def search_with_consignment_info(search_term):
