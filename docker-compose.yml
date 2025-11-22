@@ -1,0 +1,188 @@
+version: "3.9"
+
+services:
+  # MariaDB Database
+  mariadb:
+    image: mariadb:10.6
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-admin}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=${DB_ROOT_PASSWORD:-admin}
+      interval: 5s
+      retries: 10
+    networks:
+      - frappe-network
+
+  # Redis Cache
+  redis-cache:
+    image: redis:7-alpine
+    volumes:
+      - redis-cache-data:/data
+    networks:
+      - frappe-network
+
+  # Redis Queue
+  redis-queue:
+    image: redis:7-alpine
+    volumes:
+      - redis-queue-data:/data
+    networks:
+      - frappe-network
+
+  # Frappe/ERPNext Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-15}
+        ERPNEXT_BRANCH: ${ERPNEXT_BRANCH:-version-15}
+    volumes:
+      - ./consignment_store:/home/frappe/frappe-bench/apps/consignment_store:ro
+      - sites-data:/home/frappe/frappe-bench/sites
+      - logs-data:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: 9000
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+    stdin_open: true
+    tty: true
+    networks:
+      - frappe-network
+
+  # Frappe Web Server (nginx)
+  frontend:
+    image: frappe/erpnext:${ERPNEXT_VERSION:-v15}
+    command: nginx-entrypoint.sh
+    environment:
+      BACKEND: backend:8000
+      SOCKETIO: websocket:9000
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME:-development.localhost}
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - sites-data:/home/frappe/frappe-bench/sites:ro
+    ports:
+      - "${HTTP_PORT:-8000}:8080"
+    depends_on:
+      - backend
+      - websocket
+    networks:
+      - frappe-network
+
+  # Frappe WebSocket Server
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-15}
+        ERPNEXT_BRANCH: ${ERPNEXT_BRANCH:-version-15}
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+    volumes:
+      - sites-data:/home/frappe/frappe-bench/sites:ro
+    environment:
+      REDIS_QUEUE: redis-queue:6379
+    depends_on:
+      - redis-queue
+    networks:
+      - frappe-network
+
+  # Frappe Scheduler
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-15}
+        ERPNEXT_BRANCH: ${ERPNEXT_BRANCH:-version-15}
+    command: bench schedule
+    volumes:
+      - ./consignment_store:/home/frappe/frappe-bench/apps/consignment_store:ro
+      - sites-data:/home/frappe/frappe-bench/sites
+      - logs-data:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+    depends_on:
+      - backend
+    networks:
+      - frappe-network
+
+  # Frappe Queue Worker (Short)
+  worker-short:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-15}
+        ERPNEXT_BRANCH: ${ERPNEXT_BRANCH:-version-15}
+    command: bench worker --queue short
+    volumes:
+      - ./consignment_store:/home/frappe/frappe-bench/apps/consignment_store:ro
+      - sites-data:/home/frappe/frappe-bench/sites
+      - logs-data:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+    depends_on:
+      - backend
+    networks:
+      - frappe-network
+
+  # Frappe Queue Worker (Long)
+  worker-long:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-15}
+        ERPNEXT_BRANCH: ${ERPNEXT_BRANCH:-version-15}
+    command: bench worker --queue long
+    volumes:
+      - ./consignment_store:/home/frappe/frappe-bench/apps/consignment_store:ro
+      - sites-data:/home/frappe/frappe-bench/sites
+      - logs-data:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+    depends_on:
+      - backend
+    networks:
+      - frappe-network
+
+volumes:
+  mariadb-data:
+  redis-cache-data:
+  redis-queue-data:
+  sites-data:
+  logs-data:
+
+networks:
+  frappe-network:
+    driver: bridge

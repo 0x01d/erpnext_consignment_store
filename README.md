@@ -2,9 +2,61 @@
 
 A Frappe/ERPNext app for managing consignment inventory with proper accounting, digital contracts, and automated ownership transfer.
 
-### Installation
+### Quick Start with Docker (Recommended)
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+The fastest way to get started is using Docker. This will set up a complete development environment with ERPNext and the Consignment Store app.
+
+**Prerequisites:**
+- Docker and Docker Compose installed
+- At least 4GB RAM available
+
+**Setup:**
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd erpnext_consignment_store
+
+# Copy environment variables
+cp .env.example .env
+
+# Run the automated setup (this will take 10-15 minutes)
+./setup.sh
+```
+
+Once setup is complete, access your ERPNext instance at:
+- **URL:** http://localhost:8000
+- **Username:** Administrator
+- **Password:** admin (or what you set in `.env`)
+
+**Common Commands:**
+
+```bash
+# Start services
+make start
+
+# Stop services
+make stop
+
+# View logs
+make logs
+
+# Access Frappe console
+make console
+
+# Run migrations
+make migrate
+
+# Clear cache
+make clear-cache
+
+# View all available commands
+make help
+```
+
+### Manual Installation
+
+You can also install this app manually using the [bench](https://github.com/frappe/bench) CLI:
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
@@ -155,47 +207,93 @@ Commission Entries accumulate → Threshold met → Payout created → Payment p
 - ERPNext
 - Python packages: `qrcode[pil]`, `python-barcode`
 
-=======
-### Setting up a dev environment
+## Development
 
-1. Create dirs
-- `sudo mkdir -p /opt/shared/frappe`
-- `cd /opt/shared`
+### Docker Architecture
 
-2. Create frappe user and add to docker group, do not skip this.
-- `sudo useradd frappe`
-- `sudo usermod -aG docker frappe`
-- `sudo chown -R frappe:frappe frappe`
+The Docker setup includes the following services:
 
-3. Change into the user and download containers
-- `sudo su frappe`
-- `cd frappe`
-- `git clone https://github.com/frappe/frappe_docker.git`
-- `cd frappe_docker`
-- `cp -R devcontainer-example .devcontainer`
+- **mariadb** - Database server
+- **redis-cache** - Redis cache for Frappe
+- **redis-queue** - Redis queue for background jobs
+- **backend** - Main Frappe/ERPNext application server
+- **frontend** - Nginx web server
+- **websocket** - WebSocket server for real-time updates
+- **scheduler** - Background job scheduler
+- **worker-short** - Worker for short-running background jobs
+- **worker-long** - Worker for long-running background jobs
 
-4. Start Docker Daemon and go!
-- `sudo systemctl start docker` (from different terminal, frappe isn't in sudoers list)
-- `docker-compose -f .devcontainer/docker-compose.yml up -d` (from frappe user it is in docker group as we added it)
-- `docker exec -e "TERM=xterm-256color" -w /workspace/development -it devcontainer-frappe-1 bash`
-You are now in the container and can run bench commands
+### Helper Scripts
 
-5. Install ERPNext + Frappe
-- `sudo chown -R frappe:frappe /workspace`
-- `python installer.py -n 20 -d mariadb`
-- `cd frappe-bench`
-- `bench use development.localhost`
-- `bench start`
+All helper scripts are located in the `docker/` directory:
 
-Congratulations you are now running an ERPNEXT development instance. Do the
-install on 127.0.0.1:8000/app and create a company the consignment_store expects
-a company for the postinstall. You can log in with Administrator admin
+- `bash.sh` - Access bash shell in the backend container
+- `console.sh` - Open Frappe Python console
+- `migrate.sh` - Run database migrations
+- `clear-cache.sh` - Clear Frappe cache
+- `logs.sh [service]` - View logs (all services or specific service)
+- `rebuild-app.sh` - Rebuild the app after making changes
+- `reset.sh` - Reset entire environment (WARNING: deletes all data)
 
-6. Clone the repo and install it
-- cd into apps directory from your user that has access to your ssh key, i.e. outside the docker container
-- `git clone git@github.com:0x01d/erpnext_consignment_store.git ./consignment_store`
-- TODO
+### Making Changes to the App
 
+When you make changes to the consignment_store app code:
+
+```bash
+# The app code is mounted as a volume, so changes are reflected immediately
+# However, you may need to:
+
+# 1. Clear cache
+make clear-cache
+
+# 2. Run migrations if you changed DocTypes
+make migrate
+
+# 3. Restart services if needed
+make restart
+
+# Or use the rebuild script which does all of the above
+./docker/rebuild-app.sh
+```
+
+### Troubleshooting
+
+**Services not starting:**
+```bash
+# Check service status
+docker-compose ps
+
+# View logs
+docker-compose logs -f [service-name]
+
+# Restart specific service
+docker-compose restart [service-name]
+```
+
+**Database connection issues:**
+```bash
+# Ensure MariaDB is healthy
+docker-compose ps mariadb
+
+# Check database logs
+docker-compose logs mariadb
+```
+
+**Port already in use:**
+```bash
+# Change the HTTP_PORT in .env file
+# Default is 8000, you can change to any available port
+HTTP_PORT=8080
+```
+
+**Reset everything:**
+```bash
+# WARNING: This deletes all data
+./docker/reset.sh
+
+# Then run setup again
+./setup.sh
+```
 
 ### Contributing
 

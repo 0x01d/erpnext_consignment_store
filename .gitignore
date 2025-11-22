@@ -5,3 +5,9 @@
 tags
 node_modules
 __pycache__
+
+# Docker
+.env
+sites/
+logs/
+*.log
